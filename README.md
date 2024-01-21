@@ -11,7 +11,7 @@
 
 ## Purpose
 
-Reset a database deleteing generated data and clearing flags
+Reset a database deleting generated data and clearing flags
 
 ## Introduction
 
