@@ -152,10 +152,16 @@ sqlstatements = toml.load(
 databasedsn = database_dsn()
 
 if __name__ == "__main__":
+    output.put_html("<h1>" + Path(sys.argv[0]).stem + "</h1>")
+
+    output.put_code(appcredits)
+
     if confirm(
         "Confirm Database",
         databasedsn["DBQ"],
     ):
+        output.put_info(f"File Selected: {databasedsn['DBQ']}")
+
         with pyodbc.connect(
             f"Driver={{{databasedsn['DRIVER']}}};"
             f"Dbq={PurePath(databasedsn['DBQ'])};"
@@ -167,3 +173,8 @@ if __name__ == "__main__":
                     if confirm(f"{table} action?", sql):
                         dbcurs.execute(sql)
                         logger.info(f"Ran: {sql} on {databasedsn['DBQ']}")
+                        output.put_success(f"Ran: {sql} on {databasedsn['DBQ']}")
+
+        output.put_success("Operation complete.")
+
+    output.put_success("'Compact and Repair' your database now")
