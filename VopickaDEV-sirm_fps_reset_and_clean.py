@@ -21,12 +21,32 @@ try:
     trying = "pathlib"
     __dependencies__.append(trying)
     from pathlib import Path, PurePath
-    
+
     trying = "datetime.datetime"
     __dependencies__.append(trying)
     from datetime import datetime
-    
+
     # TODO - Add requirements
+
+    trying = "pyodbc"
+    __dependencies__.append(trying)
+    import pyodbc
+
+    trying = "toml"
+    __dependencies__.append(trying)
+    import toml
+
+    trying = "pywebio"
+    __dependencies__.append(trying)
+    from pywebio import output, exceptions
+
+    trying = "pywebio_battery"
+    __dependencies__.append(trying)
+    from pywebio_battery import confirm
+
+    trying = "spf.Config"
+    __dependencies__.append(trying)
+    from spf.Config import database_dsn
 
 except ImportError:
     errstat = True
@@ -41,8 +61,9 @@ finally:
 
     logging.basicConfig(
         filename=Path(
-            PurePath(sys.argv[0]).parent,
-            f"{PurePath(sys.argv[0]).stem}-{datetime.now().strftime('%Y_%m_%d-%H_%M_%S')}.log",),
+            PurePath(sys.argv[0]).parent / "Logs",
+            f"{PurePath(sys.argv[0]).stem}-{datetime.now().strftime('%Y_%m_%d-%H_%M_%S')}.log",
+        ),
         format="%(asctime)s-[%(levelname)s]-(%(filename)s)-<%(funcName)s>-#%(lineno)d#-%(message)s",
         datefmt="%Y.%m.%d %H:%M:%S",
         filemode="w",
@@ -121,14 +142,28 @@ logger.info(f"\n{appcredits}\n")
 # endregion Header Block ######################################################
 
 
-# region - Functions here
-def MyFunction(variable):
-    pass
+sqlstatements = toml.load(
+    Path(
+        PurePath(sys.argv[0]).parent,
+        "SQL.toml",
+    )
+)
 
-
-# endregion - End of functions
-
+databasedsn = database_dsn()
 
 if __name__ == "__main__":
-
-    MyFunction("Values")
+    if confirm(
+        "Confirm Database",
+        databasedsn["DBQ"],
+    ):
+        with pyodbc.connect(
+            f"Driver={{{databasedsn['DRIVER']}}};"
+            f"Dbq={PurePath(databasedsn['DBQ'])};"
+            f"Uid={databasedsn['UID']};"
+            f"Pwd=;"
+        ) as dbconn:
+            with dbconn.cursor() as dbcurs:
+                for table, sql in dict(sqlstatements["tables"]).items():
+                    if confirm(f"{table} action?", sql):
+                        dbcurs.execute(sql)
+                        logger.info(f"Ran: {sql} on {databasedsn['DBQ']}")
